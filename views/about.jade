@@ -1,0 +1,15 @@
+extends layout
+
+block content
+    h1.
+        BioContext Resolver
+    div
+        p.
+          In an ideal world this service would not be necessary, and entities would be identified by globally unique URIs.
+          However, not all identifiers are associated with URIs, and sometimes identifiers that compacted forms of URIs become decoupled from
+          disambiguating prefix mappings. This service uses the #[a(href="https://github.com/cmungall/biocontext") biocontext] registry to
+          best guess what a short name refers to and to direct you there.
+    div
+        p.
+           For more details see #[a(href="https://github.com/cmungall/biocontext") biocontext].
+           The source for this lives hereL #[a(href="https://github.com/cmungall/biocontext-resolver") biocontext-resolver].
