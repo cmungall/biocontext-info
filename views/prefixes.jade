@@ -1,19 +1,21 @@
 extends layout
 
 block content
-    h1.
-        #{repository.title}
     div
+        h1 DEMO
         p.
-           Description #{repository.description}
+          Merged Prefix List (DEMO)
     div
         table(class="table table-striped")
           thead
-            tr: th 
+            tr
+              th Prefix
+              th Base URL
           tbody
             each p in prefixes
               tr
                 td= p.prefix
                 td
-                  a(href="#{p.base_url}")= p.base_url
+                  each url in p.base_urls
+                    a(href="#{url}")= url
 

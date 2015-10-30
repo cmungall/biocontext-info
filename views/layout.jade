@@ -21,11 +21,12 @@ html
                     div.nav-collapse
                         ul.nav
                             li.active
-                                a(href='/') Ontologies
+                                a(href='/') Prefixes
                             li
                                 a(href='/about') About
-                            li
-                                a(href='/contact') Contact
+                    div
+                        form(action='/resolve',method=GET)
+                          input(id='name',name='name', type='text',value='',placeholder='dc:title')
         block content
 
     div.container!= body

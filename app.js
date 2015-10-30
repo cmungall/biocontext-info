@@ -5,9 +5,10 @@
 
 var express = require('express');
 var routes = require('./routes');
-var ontology = require('./routes/ontology');
+var resolver = require('./routes/resolver');
 var http = require('http');
 var path = require('path');
+var request = require('request');
 
 var app = express();
 
@@ -27,32 +28,51 @@ var repository;
 
 var yaml = require('js-yaml');
 var fs   = require('fs');
+var context_map = {}
 
-// Get document, or throw exception on error
-var repositoryBase = "data/repository";
-try {
-    repository = yaml.safeLoad(fs.readFileSync(repositoryBase + '.yaml', 'utf8'));
-    fs.writeFile(repositoryBase + ".jsonld", JSON.stringify(repository,null,' '));
-    console.log("refereshed repository");
-} catch (e) {
-    console.error("Error reading repo");
-    console.log(e);
+var source_map = {
+    "obo_context": "https://raw.githubusercontent.com/cmungall/biocontext/master/registry/obo_context.jsonld",
+    "semweb_vocab_context": "https://raw.githubusercontent.com/cmungall/biocontext/master/registry/semweb_vocab_context.jsonld",
+    "semweb_context": "https://raw.githubusercontent.com/cmungall/biocontext/master/registry/semweb_context.jsonld"
+};
+
+var load_context = function(name, url) {
+    console.log("Loading:"+name+" "+url);
+
+    request({
+        url: url,
+        json: true
+    }, function (error, response, body) {
+
+        if (!error && response.statusCode === 200) {
+            context_map[name] = body['@context']
+        }
+    })
+};
+
+for (var n in source_map) {
+    load_context(n, source_map[n]);
 }
 
 // Make our repository accessible to our router
 app.use(function(req,res,next){
-    req.repository = repository;
+    req.context_map = context_map;
     next();
 });
 
 
  
-app.get('/', ontology.list);
-app.get('/ontologies', ontology.list);
-app.get('/ontology/:id', ontology.info);
-app.get('/obo/*', ontology.fall_through);
+app.get('/', resolver.list);
+app.get('/resolve/:name', resolver.resolve);
+app.get('/resolve', resolver.resolve);
+app.get('/info/:name', resolver.resolve);
+app.get('/info', resolver.resolve);
+//app.get('/ontologies', ontology.list);
+//app.get('/ontology/:id', ontology.info);
+//app.get('/obo/*', ontology.fall_through);
+app.get('/about', 
+        function(req, res){ res.render('about')});
 
-app.get('/*', function(req, res){ res.send("FALL THROUGH")});
 
 
 

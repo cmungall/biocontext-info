@@ -1,44 +1,78 @@
 
-get_context = function(req) {
-    return req.context;
+get_context_map = function(req) {
+    return req.context_map;
 }
 
+get_prefix_map = function(req) {
+    var context_map = get_context_map(req);
+    var prefix_map = {};
+    for (var n in context_map) {
+        console.log("Name="+n);
+        var context = context_map[n];
+        for (var k in context) {
+            console.log("  Prefix="+k);
+            if (!prefix_map[k]) {
+                prefix_map[k] = [];
+            }
+            prefix_map[k].push(context[k]);
+        }
+    }
+    return prefix_map;
+}
+
+
 exports.resolve = function(req, res){
-    var id = req.params.id;
-    var context = get_context(req);
+    var name = req.params.name;
+    if (!name) {
+        name = req.query.name;
+    }
+    var context_map = get_context_map(req);
 
-    var parts = id.split(':');
+    console.log("NAME:"+name);
 
-    var url = context[parts[0]];
-    if (parts.length == 2) {
-        url += parts[1]
-    }
-    else {
-    }
+    for (var n in context_map) {
 
-    if (url) {
-        res.redirect(url);
+        console.log("N:"+n);
+        var context = context_map[n];
+        var url = expand_name(name, context);
+        if (url) {
+            res.redirect(url);
+        }
     }
-    else {
-        res.send("DUNNO WHAT TO DO WITH "+path);
-    }
+    res.send("DUNNO WHAT TO DO WITH "+name);
 };
 
-exports.list = function(req, res){
-    var repository = req.repository;
-    var context = get_context(req);
+multi_expand = function(name, context_map) {
+    for (var n in context_map) {
 
-    prefixes = []
-    for (var k in context) {
-        var base_url = context[k];
-        prefixes.push({prefix: k, base_url: base_url})
+        console.log("N:"+n);
+        var context = context_map[n];
+        var url = expand_name(name, context);
+        if (url) {
+            res.redirect(url);
+        }
     }
 
-    res.render('prefixes', { repository: 'foo',
-                             prefixes: prefixes });
 };
 
 exports.info = function(req, res){
+    var name = req.params.name;
+    if (!name) {
+        name = req.query.name;
+    }
+    var context_map = get_context_map(req);
+
+    console.log("NAME:"+name);
+
+    for (var n in context_map) {
+
+        console.log("N:"+n);
+        var context = context_map[n];
+        var url = expand_name(name, context);
+        if (url) {
+            res.redirect(url);
+        }
+    }
     var repository = req.repository;
     var id = req.params.id;
     //var ontology = repository.ontologies.filter(function(x){return x.id == id})[0];
@@ -51,6 +85,58 @@ exports.info = function(req, res){
                  dependencies: dependencies
                });
 };
+
+expand_name = function(name, context, depth) {
+
+    console.log("EXP: "+name);
+    var parts = name.split(':');
+
+    if (parts.length == 2) {
+        var prefix = parts[0];
+
+        console.log("  CURIE: "+name+" PREFIX: "+prefix);
+
+        if (context[prefix]) {
+            var x = context[prefix];
+            x += parts[1];
+            return x;
+        }
+    }
+    else {
+        if (context[name]) {
+            var x = context[name];
+            console.log("  "+name+" --> "+x);
+            if (x.indexOf("http") == 0) {
+                return x;
+            }
+            else {
+                if (depth > 20) {
+                    return;
+                }
+                // todo: guard against recursive loop
+                return expand_name(x, context, depth+1);
+            }
+        }
+    }
+}
+
+exports.list = function(req, res){
+    var repository = req.repository;
+    var prefix_map = get_prefix_map(req);
+
+    prefixes = []
+    
+    for (var k in prefix_map) {
+        
+        var base_urls = prefix_map[k];
+        console.log(k + " ==> " + base_urls);
+        prefixes.push({prefix: k, base_urls: base_urls})
+    }
+
+    res.render('prefixes', { repository: 'foo',
+                             prefixes: prefixes });
+};
+
 
 exports.fall_through = function(req, res) {
     var repository = req.repository;
