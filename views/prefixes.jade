@@ -1,0 +1,19 @@
+extends layout
+
+block content
+    h1.
+        #{repository.title}
+    div
+        p.
+           Description #{repository.description}
+    div
+        table(class="table table-striped")
+          thead
+            tr: th 
+          tbody
+            each p in prefixes
+              tr
+                td= p.prefix
+                td
+                  a(href="#{p.base_url}")= p.base_url
+
